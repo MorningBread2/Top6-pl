@@ -541,11 +541,11 @@ slides.push({ // 13b — WINNER POSTER
   build(){
     const s=el('div','slide');
     const wrap=el('div','winner-poster');
-    const img=el('img','winner-img'); img.src='assets/winner-aleks.jpg'; img.alt='Vinner: Aleks';
+    const img=el('img','winner-img'); img.src='assets/winner-aleks.png'; img.alt='Vinner: Aleks';
     // fallback hvis bildet mangler
     const fallback=el('div','winner-fallback');
     fallback.innerHTML='<div class="big-emoji">👑</div><h1 class="gradtext">VINNER: ALEKS</h1>'+
-      '<div class="sub">(legg bildet i <code>assets/winner-aleks.jpg</code> så vises det her)</div>';
+      '<div class="sub">(legg bildet i <code>assets/winner-aleks.png</code> så vises det her)</div>';
     fallback.style.display='none';
     img.onerror=()=>{ img.style.display='none'; fallback.style.display='flex'; };
     wrap.append(img, fallback);
