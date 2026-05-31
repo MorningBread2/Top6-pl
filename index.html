@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>⚽ PL-tipping 2025/26 — Den store avsløringen 🏆</title>
+<style>
+/* ============================================================
+   PL-TIPPING — animert avsløring
+   Naviger:  klikk / mellomrom / pil høyre  = neste
+             pil venstre                    = forrige
+   ============================================================ */
+:root{
+  --bg1:#1a0b2e; --bg2:#2d0a4e; --bg3:#0b1f3a;
+  --pl-green:#00ff87; --pl-pink:#ff2882; --pl-cyan:#04f5ff; --pl-yellow:#ffd500;
+  --ink:#ffffff; --muted:#b9a7d6;
+  --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.14);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%; margin:0;}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  color:var(--ink); overflow:hidden; user-select:none;
+  background:radial-gradient(1200px 800px at 20% 10%, #3a0d63 0%, transparent 60%),
+             radial-gradient(1000px 700px at 90% 90%, #06294d 0%, transparent 55%),
+             linear-gradient(160deg,var(--bg1),var(--bg2) 45%,var(--bg3));
+}
+#stage{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;}
+.slide{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:clamp(18px,4vw,48px); text-align:center; gap:18px;
+  opacity:0; transform:translateY(28px) scale(.98); pointer-events:none;
+  transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1);
+}
+.slide.active{opacity:1; transform:none; pointer-events:auto;}
+h1{font-size:clamp(28px,7vw,72px); margin:0; line-height:1.02; letter-spacing:-1px; font-weight:900;}
+h2{font-size:clamp(22px,5vw,46px); margin:0; font-weight:800;}
+.kicker{letter-spacing:.35em; text-transform:uppercase; color:var(--muted); font-weight:700; font-size:clamp(11px,2.4vw,15px);}
+.sub{color:var(--muted); font-size:clamp(15px,3vw,22px); max-width:760px;}
+.gradtext{
+  background:linear-gradient(90deg,var(--pl-green),var(--pl-cyan),var(--pl-pink),var(--pl-yellow));
+  background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:hue 6s linear infinite;
+}
+@keyframes hue{to{background-position:300% 0;}}
+.big-emoji{font-size:clamp(60px,16vw,150px); filter:drop-shadow(0 10px 30px rgba(0,0,0,.4)); animation:bob 3s ease-in-out infinite;}
+@keyframes bob{50%{transform:translateY(-14px) rotate(-4deg);}}
+
+/* contestant cards */
+.cards{display:flex; gap:clamp(10px,2vw,22px); flex-wrap:wrap; justify-content:center; max-width:980px;}
+.pcard{
+  background:var(--card); border:1px solid var(--line); border-radius:20px;
+  padding:clamp(14px,2.4vw,26px); width:clamp(150px,40vw,210px);
+  box-shadow:0 18px 40px rgba(0,0,0,.35); position:relative; overflow:hidden;
+  transform:translateY(40px); opacity:0;
+}
+.pcard.in{transform:none; opacity:1; transition:all .6s cubic-bezier(.2,.8,.2,1);}
+.pcard .av{font-size:clamp(40px,9vw,64px);}
+.pcard .nm{font-weight:900; font-size:clamp(18px,3.5vw,26px); margin-top:6px;}
+.pcard .ep{color:var(--muted); font-size:clamp(12px,2.6vw,15px); margin-top:4px; min-height:2.6em;}
+.pcard::before{content:""; position:absolute; left:0; top:0; height:6px; width:100%; background:var(--clr);}
+
+/* rules */
+.rules{display:flex; flex-direction:column; gap:12px; max-width:760px; width:100%;}
+.rule{
+  display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--line);
+  border-radius:14px; padding:12px 16px; font-size:clamp(14px,2.8vw,20px); text-align:left;
+  opacity:0; transform:translateX(-24px);
+}
+.rule.in{opacity:1; transform:none; transition:all .5s ease;}
+.rule .pts{margin-left:auto; font-weight:900; color:var(--pl-green); white-space:nowrap;}
+.tag{display:inline-block; padding:4px 12px; border-radius:999px; font-weight:800; font-size:clamp(12px,2.6vw,15px);}
+
+/* fasit table */
+.fasit{display:flex; flex-direction:column; gap:10px; width:100%; max-width:560px;}
+.frow{
+  display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--line);
+  border-radius:14px; padding:12px 16px; font-size:clamp(16px,3.2vw,22px); font-weight:700;
+  opacity:0; transform:scale(.9);
+}
+.frow.in{opacity:1; transform:none; transition:all .5s cubic-bezier(.2,.9,.3,1.2);}
+.frow .pos{width:42px; height:42px; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+  border-radius:50%; font-weight:900; background:rgba(255,255,255,.1);}
+.frow .extra{margin-left:auto; color:var(--muted); font-weight:600; font-size:.8em;}
+
+/* scoreboard */
+.board{width:100%; max-width:920px; display:flex; flex-direction:column; gap:10px;}
+.brow{display:grid; grid-template-columns: 1.3fr 3fr auto; align-items:center; gap:14px;
+  background:var(--card); border:1px solid var(--line); border-radius:16px; padding:10px 16px;}
+.brow .who{display:flex; align-items:center; gap:10px; font-weight:900; font-size:clamp(14px,2.8vw,20px);}
+.brow .who .dot{width:14px;height:14px;border-radius:50%;background:var(--clr);flex:0 0 auto; box-shadow:0 0 14px var(--clr);}
+.bar-wrap{height:26px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden; position:relative;}
+.bar{height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg,var(--clr),#ffffffcc);
+  transition:width .9s cubic-bezier(.2,.8,.2,1);}
+.brow .tot{font-weight:900; font-size:clamp(20px,4.5vw,30px); min-width:54px; text-align:right; font-variant-numeric:tabular-nums;}
+.crown{position:absolute; right:6px; top:50%; transform:translateY(-50%); font-size:18px; filter:drop-shadow(0 2px 4px #000);}
+.cat-pill{display:inline-flex; align-items:center; gap:10px; background:rgba(0,0,0,.25); border:1px solid var(--line);
+  padding:8px 18px; border-radius:999px; font-weight:800; font-size:clamp(14px,3vw,20px);}
+.delta{font-weight:900; color:var(--pl-green); font-size:.7em;}
+
+/* podium */
+.podium{display:flex; align-items:flex-end; gap:clamp(8px,2vw,22px); justify-content:center; min-height:46vh;}
+.pod{display:flex; flex-direction:column; align-items:center; justify-content:flex-end; width:clamp(96px,26vw,180px);
+  opacity:0; transform:translateY(60px);}
+.pod.in{opacity:1; transform:none; transition:all .7s cubic-bezier(.2,.9,.3,1.15);}
+.pod .head{font-size:clamp(34px,9vw,64px);}
+.pod .nm{font-weight:900; font-size:clamp(15px,3.2vw,24px); margin:6px 0;}
+.pod .score{font-weight:900; font-size:clamp(13px,2.6vw,18px); color:var(--muted);}
+.pod .block{width:100%; border-radius:14px 14px 0 0; margin-top:10px; display:flex; align-items:flex-start;
+  justify-content:center; padding-top:10px; font-weight:900; font-size:clamp(20px,5vw,34px); color:#1a0b2e;
+  background:linear-gradient(180deg,var(--clr),#ffffffaa); box-shadow:0 -6px 30px var(--clr);}
+
+/* hud */
+#hud{position:fixed; left:0; right:0; bottom:16px; display:flex; align-items:center; justify-content:center; gap:14px; z-index:5; pointer-events:none;}
+.dots{display:flex; gap:7px;}
+.d{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22); transition:all .3s;}
+.d.on{background:var(--pl-green); width:22px; border-radius:6px;}
+#hint{position:fixed; right:18px; bottom:14px; color:var(--muted); font-size:12px; opacity:.7; z-index:5;}
+.btn{pointer-events:auto; cursor:pointer; border:1px solid var(--line); background:rgba(255,255,255,.08);
+  color:#fff; padding:12px 26px; border-radius:999px; font-weight:800; font-size:clamp(15px,3vw,19px);
+  backdrop-filter:blur(6px); transition:transform .15s, background .2s;}
+.btn:hover{transform:translateY(-2px); background:rgba(255,255,255,.16);}
+.pulse{animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{50%{transform:scale(1.06);}}
+#confetti{position:fixed; inset:0; pointer-events:none; z-index:4;}
+.spotlight{position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(600px 600px at var(--mx,50%) var(--my,40%), rgba(255,255,255,.06), transparent 60%);}
+.shake{animation:shake .5s;}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px) rotate(-1deg)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.fade-line{opacity:0; transform:translateY(14px);} .fade-line.in{opacity:1; transform:none; transition:all .6s ease;}
+.roast{font-size:clamp(14px,3vw,20px); color:var(--pl-yellow); font-weight:700;}
+</style>
+</head>
+<body>
+<div class="spotlight"></div>
+<canvas id="confetti"></canvas>
+<div id="stage"></div>
+<div id="hud"><div class="dots" id="dots"></div></div>
+<div id="hint">mellomrom / klikk → neste &nbsp;•&nbsp; ← tilbake</div>
+
+<script>
+/* =====================================================================
+   REDIGERBAR DATA  — endre her om noe stemmer ikke
+   ===================================================================== */
+const COLORS = { "Aleks":"#00ff87", "Fredronny":"#ff2882", "Andreas":"#04f5ff", "Lars Torino":"#ffd500" };
+const AVATARS= { "Aleks":"🧔", "Fredronny":"😎", "Andreas":"🧑", "Lars Torino":"🤓" };
+const EPITHET= {
+  "Aleks":"«Orakelet» 🔮",
+  "Fredronny":"Den evige toer 🥈",
+  "Andreas":"Salah-troende ✝️",
+  "Lars Torino":"Newcastle-optimisten 🌫️"
+};
+
+// Fasit (faktisk resultat)
+const ACTUAL = {
+  table:["Arsenal","Man City","Man Utd","Aston Villa","Liverpool","Bournemouth"],
+  topscorer:"Haaland",
+  assist:"Bruno Fernandes"
+};
+
+// Topp6-poeng per kategori  [Aleks, Fredronny, Andreas, Lars Torino]
+const PLAYERS = ["Aleks","Fredronny","Andreas","Lars Torino"];
+const TOP6 = {
+  categories:[
+    {key:"vinner", label:"Riktig vinner",          rule:"3 poeng",  emoji:"👑", pts:[0,0,0,0]},
+    {key:"plass",  label:"Riktig plassering topp 4",rule:"2 poeng pr. lag", emoji:"🎯", pts:[4,2,0,0]},
+    {key:"lag",    label:"Riktig lag i topp 6",     rule:"1 poeng pr. lag", emoji:"✅", pts:[5,4,4,4]},
+    {key:"topp",   label:"Toppscorer",              rule:"2 poeng",  emoji:"⚽", pts:[2,2,0,0]},
+    {key:"assist", label:"Assistkonge",             rule:"2 poeng",  emoji:"🅰️", pts:[0,0,0,0]},
+  ],
+  // Vinnerpoeng Topp6: 3 til mest poeng, 1 til nest mest
+  vinnerpoeng:[3,1,0,0]
+};
+
+// Fantasy PL — vinnerpoeng (3 til 1.plass, 1 til 2.plass). Råpoeng ukjent (TODO: fyll inn om ønskelig).
+const FPL = {
+  vinnerpoeng:[3,1,0,0],
+  // valgfritt: faktiske FPL-totalpoeng. La stå null hvis ukjent.
+  raw:[null,null,null,null],
+  // rekkefølge for avsløring (4. -> 1.). Andreas/Lars delt sist.
+  order:["Lars Torino","Andreas","Fredronny","Aleks"]
+};
+
+// Hver spillers tips (for fasit-sjekk)
+const PICKS = {
+  "Aleks":      {top6:["Liverpool","Man City","Man Utd","Chelsea","Arsenal","Aston Villa"], ts:"Haaland", as:"Wirtz"},
+  "Fredronny":  {top6:["Liverpool","Man City","Arsenal","Chelsea","Tottenham","Man Utd"],   ts:"Haaland", as:"Salah"},
+  "Andreas":    {top6:["Liverpool","Arsenal","Chelsea","Man City","Brighton","Man Utd"],    ts:"Salah",   as:"Salah"},
+  "Lars Torino":{top6:["Liverpool","Chelsea","Arsenal","Man City","Newcastle","Man Utd"],   ts:"Salah",   as:"Wirtz"},
+};
+
+/* =====================================================================
+   AVLEDEDE TALL
+   ===================================================================== */
+const top6Total = PLAYERS.map((_,i)=>TOP6.categories.reduce((s,c)=>s+c.pts[i],0)); // 11,8,4,4
+const grandTotal = PLAYERS.map((_,i)=>FPL.vinnerpoeng[i]+TOP6.vinnerpoeng[i]);      // 6,2,0,0
+const idx = n => PLAYERS.indexOf(n);
+
+/* =====================================================================
+   HJELPERE
+   ===================================================================== */
+const stage = document.getElementById('stage');
+let slides=[], cur=0;
+function el(tag, cls, html){const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e;}
+function styleClr(node,name){node.style.setProperty('--clr', COLORS[name]); return node;}
+
+function animateNumber(node, from, to, dur=900){
+  const t0=performance.now();
+  function step(t){
+    const p=Math.min(1,(t-t0)/dur);
+    const e=1-Math.pow(1-p,3);
+    node.textContent = Math.round(from+(to-from)*e);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function stagger(nodes, cls='in', gap=140, start=200){
+  nodes.forEach((n,i)=> setTimeout(()=>n.classList.add(cls), start+i*gap));
+}
+
+/* spotlight follows pointer */
+addEventListener('pointermove',e=>{
+  document.querySelector('.spotlight').style.setProperty('--mx', e.clientX+'px');
+  document.querySelector('.spotlight').style.setProperty('--my', e.clientY+'px');
+});
+
+/* =====================================================================
+   CONFETTI
+   ===================================================================== */
+const cc=document.getElementById('confetti'), ctx=cc.getContext('2d');
+let parts=[], confettiOn=false;
+function resize(){cc.width=innerWidth; cc.height=innerHeight;} resize(); addEventListener('resize',resize);
+function burstConfetti(amount=180, power=1){
+  const cols=Object.values(COLORS).concat(['#ffffff','#ff7b00']);
+  for(let i=0;i<amount;i++){
+    parts.push({x:innerWidth/2+(Math.random()-.5)*200, y:innerHeight*0.35,
+      vx:(Math.random()-.5)*14*power, vy:(Math.random()*-16-6)*power,
+      g:.45+Math.random()*.25, s:6+Math.random()*8, r:Math.random()*6,
+      vr:(Math.random()-.5)*.4, c:cols[(Math.random()*cols.length)|0], life:1});
+  }
+  if(!confettiOn){confettiOn=true; loopConfetti();}
+}
+function rainConfetti(){ // continuous gentle rain
+  for(let i=0;i<3;i++) parts.push({x:Math.random()*innerWidth, y:-10,
+    vx:(Math.random()-.5)*2, vy:Math.random()*3+2, g:.05, s:5+Math.random()*7,
+    r:Math.random()*6, vr:(Math.random()-.5)*.3, c:Object.values(COLORS)[(Math.random()*4)|0], life:1});
+}
+let rainTimer=null;
+function startRain(){ if(rainTimer) return; rainTimer=setInterval(rainConfetti,90); if(!confettiOn){confettiOn=true;loopConfetti();}}
+function stopRain(){ clearInterval(rainTimer); rainTimer=null; }
+function loopConfetti(){
+  ctx.clearRect(0,0,cc.width,cc.height);
+  parts.forEach(p=>{p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c;
+    ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6); ctx.restore();});
+  parts=parts.filter(p=>p.y<cc.height+40);
+  if(parts.length||rainTimer) requestAnimationFrame(loopConfetti); else {confettiOn=false; ctx.clearRect(0,0,cc.width,cc.height);}
+}
+
+/* =====================================================================
+   SLIDES
+   Hver slide: { build:()=>node, enter:(node)=>void }
+   ===================================================================== */
+function rankWithMedals(values, names){
+  // returns map name -> {rank, medal}
+  const arr = names.map((n,i)=>({n, v:values[i]})).sort((a,b)=>b.v-a.v);
+  const medals=["🥇","🥈","🥉",""];
+  const out={}; let rank=0, prev=null;
+  arr.forEach((o,i)=>{ if(o.v!==prev){rank=i;} prev=o.v; out[o.n]={rank, medal:medals[rank]||""};});
+  return out;
+}
+
+slides.push({ // 0 — TITLE
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','kicker','Premier League · 2025 / 26'));
+    const emo=el('div','big-emoji','⚽'); s.append(emo);
+    s.append(el('h1','gradtext','DEN STORE<br>AVSLØRINGEN'));
+    s.append(el('div','sub','To konkurranser. Fire selvsikre menn. Kun én kan kalle seg konge — resten må leve med skammen.'));
+    const b=el('button','btn pulse','Trykk for å starte 🎬'); b.onclick=()=>next();
+    s.append(b);
+    return s;
+  }, enter(){ burstConfetti(120,.8); }
+});
+
+slides.push({ // 1 — CONTESTANTS
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','kicker','Deltakerne'));
+    s.append(el('h2',null,'De fire tippekongene 👑'));
+    const wrap=el('div','cards');
+    PLAYERS.forEach(n=>{
+      const c=styleClr(el('div','pcard'),n);
+      c.append(el('div','av',AVATARS[n]), el('div','nm',n), el('div','ep',EPITHET[n]));
+      wrap.append(c);
+    });
+    s.append(wrap); s._cards=[...wrap.children];
+    return s;
+  }, enter(s){ stagger(s._cards,'in',160,250); }
+});
+
+slides.push({ // 2 — RULES
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','kicker','Spillereglene'));
+    s.append(el('h2',null,'Slik ble poengene delt ut'));
+    s.append(el('div','sub','Konkurransen har to deler som teller <b>50/50</b>: Fantasy PL og Topp 6-tipping. Vinnerpoeng fra begge legges sammen til slutt.'));
+    const r=el('div','rules');
+    const items=[
+      ['👑','Riktig vinner av ligaen','3 p'],
+      ['🎯','Riktig plassering i topp 4','2 p / lag'],
+      ['✅','Riktig lag i topp 6','1 p / lag'],
+      ['⚽','Riktig toppscorer','2 p'],
+      ['🅰️','Riktig assistkonge','2 p'],
+      ['🏆','Mest poeng → 3 vinnerpoeng · nest mest → 1','Topp6'],
+      ['🎮','Fantasy PL: 1.plass 3 vp · 2.plass 1 vp','FPL'],
+    ];
+    items.forEach(([e,t,p])=>{ const row=el('div','rule'); row.append(el('span',null,e),el('span',null,t),el('span','pts',p)); r.append(row);});
+    s.append(r); s._rows=[...r.children];
+    return s;
+  }, enter(s){ stagger(s._rows,'in',110,200); }
+});
+
+slides.push({ // 3 — PART 1 TITLE
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','big-emoji','🎮'));
+    s.append(el('div','kicker','Del 1 av 2'));
+    s.append(el('h1','gradtext','FANTASY<br>PREMIER LEAGUE'));
+    s.append(el('div','sub','Den lange, slitsomme sesongen med kapteinsvalg, benkekluss og «hvorfor satset jeg ikke på ham»…'));
+    return s;
+  }, enter(){ burstConfetti(60,.7); }
+});
+
+slides.push({ // 4 — FPL REVEAL
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','kicker','Fantasy PL — resultatet'));
+    s.append(el('h2',null,'Trommevirvel… 🥁'));
+    const board=el('div','board'); s._board=board; s.append(board);
+    s._note=el('div','sub','Klikk videre for å avsløre én etter én ↓'); s.append(s._note);
+    // build rows hidden, in reveal order (4th->1st)
+    s._rows=[];
+    FPL.order.forEach((name)=>{
+      const i=idx(name);
+      const row=styleClr(el('div','brow'),name); row.style.opacity=0; row.style.transform='translateY(20px) scale(.96)';
+      const who=el('div','who'); who.append(el('span','dot'), el('span',null, AVATARS[name]+' '+name));
+      const mid=el('div','sub'); mid.style.margin=0; mid.style.textAlign='left';
+      const vp=FPL.vinnerpoeng[i];
+      mid.innerHTML = vp? `<b style="color:${COLORS[name]}">+${vp} vinnerpoeng</b>` : `<span style="color:var(--muted)">0 vinnerpoeng</span>`;
+      const tot=el('div','tot'); tot.textContent = FPL.raw[i]!=null? FPL.raw[i] : '';
+      row.append(who, mid, tot);
+      row._name=name; row._vp=vp;
+      board.append(row); s._rows.push(row);
+    });
+    return s;
+  },
+  enter(s){
+    // reveal sequentially with suspense
+    let k=0; const rows=s._rows;
+    const reveal=()=>{
+      if(k>=rows.length){ s._note.textContent='Aleks tar full pott i Fantasy PL 🎉'; return; }
+      const row=rows[k];
+      row.style.transition='all .6s cubic-bezier(.2,.9,.3,1.15)';
+      row.style.opacity=1; row.style.transform='none';
+      const place = rows.length-k; // 4,3,2,1
+      if(place===1){ row.classList.add('shake'); burstConfetti(160,1); row.style.boxShadow=`0 0 40px ${COLORS[row._name]}`;
+        s._head=s.querySelector('h2'); s.querySelector('h2').textContent='👑 FANTASY-MESTER 👑'; }
+      k++;
+      if(k<rows.length) s._timer=setTimeout(reveal, 1300);
+    };
+    clearTimeout(s._timer); reveal();
+  }
+});
+
+slides.push({ // 5 — PART 2 TITLE
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','big-emoji','🔮'));
+    s.append(el('div','kicker','Del 2 av 2'));
+    s.append(el('h1','gradtext','TOPP 6-TIPPINGEN'));
+    s.append(el('div','sub','Hvem leste tabellen riktig før et eneste spark var sparket?'));
+    return s;
+  }, enter(){ burstConfetti(50,.6); }
+});
+
+slides.push({ // 6 — FASIT
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','kicker','Fasiten — slik endte det egentlig'));
+    s.append(el('h2',null,'Premier League topp 6 🏟️'));
+    const f=el('div','fasit'); s._rows=[];
+    const medal=["🥇","🥈","🥉","4️⃣","5️⃣","6️⃣"];
+    ACTUAL.table.forEach((team,i)=>{
+      const row=el('div','frow');
+      row.append(el('div','pos',medal[i]), el('div',null,team));
+      f.append(row); s._rows.push(row);
+    });
+    // topscorer + assist
+    const ts=el('div','frow'); ts.append(el('div','pos','⚽'), el('div',null,'Toppscorer'), el('div','extra',ACTUAL.topscorer));
+    const as=el('div','frow'); as.append(el('div','pos','🅰️'), el('div',null,'Assistkonge'), el('div','extra',ACTUAL.assist));
+    f.append(ts,as); s._rows.push(ts,as);
+    s.append(f);
+    s.append(el('div','roast fade-line','Spoiler: alle fire tippet Liverpool som vinner. Alle fire bommet. 💀'));
+    s._line=s.querySelector('.fade-line');
+    return s;
+  }, enter(s){ stagger(s._rows,'in',150,200); setTimeout(()=>s._line.classList.add('in'), 200+s._rows.length*150+200); }
+});
+
+/* ---- Scoreboard slides: one per category, cumulative ---- */
+function makeScoreboardSlide(catIndex){
+  return {
+    build(){
+      const s=el('div','slide');
+      const cat=TOP6.categories[catIndex];
+      s.append(el('div','kicker','Topp 6 · poenggivning'));
+      const pill=el('div','cat-pill', `${cat.emoji} ${cat.label} <span class="delta">(${cat.rule})</span>`);
+      s.append(pill);
+      const board=el('div','board'); s._board=board; s.append(board);
+      // cumulative through this category
+      const cumul = PLAYERS.map((_,i)=>{
+        let c=0; for(let k=0;k<=catIndex;k++) c+=TOP6.categories[k].pts[i]; return c;});
+      const prev = PLAYERS.map((_,i)=>{
+        let c=0; for(let k=0;k<catIndex;k++) c+=TOP6.categories[k].pts[i]; return c;});
+      const maxAfter = Math.max(...PLAYERS.map((_,i)=>top6Total[i]),1);
+      const leadVal=Math.max(...cumul);
+      s._rows=[];
+      PLAYERS.forEach((name,i)=>{
+        const row=styleClr(el('div','brow'),name);
+        const who=el('div','who'); who.append(el('span','dot'), el('span',null, AVATARS[name]+' '+name));
+        const bw=el('div','bar-wrap'); const bar=el('div','bar'); bw.append(bar);
+        if(cumul[i]===leadVal && leadVal>0){ const cr=el('span','crown','👑'); bw.append(cr); }
+        const tot=el('div','tot'); tot.textContent=prev[i];
+        row.append(who,bw,tot);
+        row._bar=bar; row._tot=tot; row._from=prev[i]; row._to=cumul[i];
+        row._w=(cumul[i]/maxAfter*100); row._gain=cat.pts[i];
+        board.append(row); s._rows.push(row);
+      });
+      s._catEmoji=cat.emoji;
+      return s;
+    },
+    enter(s){
+      s._rows.forEach((row,n)=>{
+        setTimeout(()=>{
+          row._bar.style.width=row._w+'%';
+          animateNumber(row._tot, row._from, row._to, 850);
+          if(row._gain>0){ row.classList.add('shake');
+            const g=el('span','delta',` +${row._gain}`); g.style.position='absolute';
+            row.querySelector('.tot').appendChild(g);
+            setTimeout(()=>g.remove(),1200);
+          }
+        }, 150+n*180);
+      });
+    }
+  };
+}
+TOP6.categories.forEach((_,i)=> slides.push(makeScoreboardSlide(i))); // 7..11
+
+slides.push({ // 12 — TOP6 TOTALS + WINNER POINTS
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','kicker','Topp 6 — sluttsum'));
+    s.append(el('h2',null,'Hvem leste tabellen best? 🧠'));
+    const board=el('div','board'); s.append(board);
+    const ranks=rankWithMedals(top6Total,PLAYERS);
+    const maxv=Math.max(...top6Total);
+    // sorted display
+    const order=[...PLAYERS].sort((a,b)=>top6Total[idx(b)]-top6Total[idx(a)]);
+    s._rows=[];
+    order.forEach(name=>{
+      const i=idx(name);
+      const row=styleClr(el('div','brow'),name); row.style.opacity=0; row.style.transform='translateY(16px)';
+      const who=el('div','who'); who.append(el('span','dot'), el('span',null, (ranks[name].medal||'')+' '+name));
+      const bw=el('div','bar-wrap'); const bar=el('div','bar'); bw.append(bar);
+      const vp=TOP6.vinnerpoeng[i];
+      const tot=el('div','tot'); tot.innerHTML=`${top6Total[i]}<span style="color:var(--muted);font-size:.6em"> p</span>`;
+      const vpTag=el('div'); vpTag.style.minWidth='92px'; vpTag.style.textAlign='right'; vpTag.style.fontWeight=900;
+      vpTag.innerHTML = vp? `<span style="color:${COLORS[name]}">+${vp} vp</span>` : `<span style="color:var(--muted)">0 vp</span>`;
+      row.style.gridTemplateColumns='1.3fr 3fr auto auto';
+      row.append(who,bw,tot,vpTag);
+      row._bar=bar; row._w=top6Total[i]/maxv*100;
+      board.append(row); s._rows.push(row);
+    });
+    s.append(el('div','sub fade-line','Aleks (11 p) napper 3 vinnerpoeng, Fredronny (8 p) tar 1. Andreas og Lars deler jumboplassen med 4 p — «deltok».'));
+    s._line=s.querySelector('.fade-line');
+    return s;
+  },
+  enter(s){ s._rows.forEach((r,n)=>setTimeout(()=>{r.style.transition='all .5s ease'; r.style.opacity=1; r.style.transform='none'; r._bar.style.width=r._w+'%';},150+n*200));
+    setTimeout(()=>s._line.classList.add('in'),150+s._rows.length*200+200);}
+});
+
+slides.push({ // 13 — GRAND FINALE / PODIUM
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','kicker','Sammenlagt · FPL + Topp 6'));
+    s.append(el('h1','gradtext','SAMMENLAGT-<br>KONGEN 👑'));
+    const podium=el('div','podium'); s.append(podium);
+    // ranking
+    const ranks=rankWithMedals(grandTotal,PLAYERS);
+    const order=[...PLAYERS].sort((a,b)=>grandTotal[idx(b)]-grandTotal[idx(a)]);
+    // podium layout: 2nd, 1st, 3rd, 4th  -> place 1st center
+    const layout=[order[1],order[0],order[2],order[3]];
+    const heights={0:'40vh',1:'26vh',2:'18vh',3:'13vh'};
+    s._pods=[];
+    layout.forEach(name=>{
+      const r=ranks[name].rank;
+      const pod=styleClr(el('div','pod'),name);
+      const head=el('div','head', r===0?'👑':AVATARS[name]);
+      pod.append(head);
+      pod.append(el('div','nm', name));
+      pod.append(el('div','score', `FPL ${FPL.vinnerpoeng[idx(name)]} + T6 ${TOP6.vinnerpoeng[idx(name)]}`));
+      const block=el('div','block', grandTotal[idx(name)]+' vp'); block.style.height=heights[r]||'13vh';
+      pod.append(block);
+      pod._rank=r;
+      podium.append(pod); s._pods.push(pod);
+    });
+    s._winner=order[0];
+    return s;
+  },
+  enter(s){
+    // reveal 4th -> 1st
+    const byRank=[...s._pods].sort((a,b)=>b._rank-a._rank);
+    byRank.forEach((pod,n)=>{
+      setTimeout(()=>{ pod.classList.add('in');
+        if(pod._rank===0){ pod.classList.add('shake'); burstConfetti(220,1.1); startRain();
+          setTimeout(()=>burstConfetti(160,1),500); }
+      }, 300+n*700);
+    });
+  },
+  leave(){ stopRain(); }
+});
+
+slides.push({ // 14 — OUTRO
+  build(){
+    const s=el('div','slide');
+    s.append(el('div','big-emoji','🏆'));
+    s.append(el('h1','gradtext','ALEKS'));
+    s.append(el('h2',null,'Premier League-orakelet 2025/26 👑'));
+    s.append(el('div','sub','6 vinnerpoeng. Dobbeltseier i begge konkurranser. Resten kan trøste seg med at det «bare er ett år».'));
+    const roast=el('div','rules'); roast.style.maxWidth='620px';
+    [
+      ['🥈','Fredronny','evig nummer to — 2 vp'],
+      ['🥉','Delt sist: Andreas & Lars','0 vp — «vi gjorde det for moroa»'],
+      ['🔁','Revansje','samme tid neste år?'],
+    ].forEach(([e,t,p])=>{ const r=el('div','rule'); r.append(el('span',null,e),el('span',null,'<b>'+t+'</b>'),el('span','pts',p)); roast.append(r);});
+    s.append(roast); s._rows=[...roast.children];
+    const b=el('button','btn','Spill av på nytt 🔁'); b.onclick=()=>{ goto(0); };
+    s.append(b);
+    return s;
+  }, enter(s){ stagger(s._rows,'in',180,300); startRain(); setTimeout(stopRain,3500); }
+});
+
+/* =====================================================================
+   NAVIGASJON
+   ===================================================================== */
+const dots=document.getElementById('dots');
+slides.forEach(()=>dots.append(el('span','d')));
+let nodes=[];
+function render(){
+  stage.innerHTML='';
+  nodes = slides.map(sl=>{ const n=sl.build(); stage.append(n); return n; });
+  show(cur,true);
+}
+function show(i, instant){
+  nodes.forEach((n,k)=>n.classList.toggle('active',k===i));
+  [...dots.children].forEach((d,k)=>d.classList.toggle('on',k===i));
+  const sl=slides[i];
+  if(sl.enter){ setTimeout(()=>sl.enter(nodes[i]), instant?60:120); }
+}
+function leaveCur(){ const sl=slides[cur]; if(sl.leave) sl.leave(nodes[cur]); }
+function goto(i){ if(i<0||i>=slides.length||i===cur) {return;} leaveCur(); cur=i; show(cur); }
+function next(){ if(cur<slides.length-1) goto(cur+1); }
+function prev(){ if(cur>0) goto(cur-1); }
+
+addEventListener('keydown',e=>{
+  if(e.code==='Space'||e.code==='ArrowRight'||e.code==='Enter'){e.preventDefault(); next();}
+  else if(e.code==='ArrowLeft'){e.preventDefault(); prev();}
+});
+stage.addEventListener('click',e=>{ if(e.target.closest('button')) return; next(); });
+let tsx=null;
+addEventListener('touchstart',e=>tsx=e.changedTouches[0].clientX,{passive:true});
+addEventListener('touchend',e=>{ if(tsx==null)return; const dx=e.changedTouches[0].clientX-tsx;
+  if(Math.abs(dx)>50){ dx<0?next():prev(); } tsx=null; },{passive:true});
+
+render();
+</script>
+</body>
+</html>
